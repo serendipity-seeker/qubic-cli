@@ -435,7 +435,29 @@ Commands:
 	-qbondgetusermbonds <OWNER>
 			Get MBonds owned by the <OWNER>.
 	-qbondgetcfa
-			Get list of commission free addresses.
+		Get list of commission free addresses.
+
+[QSB (QUBIC SOLANA BRIDGE) COMMANDS]
+	-qsblock <AMOUNT> <RELAYER_FEE> <TO_ADDRESS_HEX> <NETWORK_OUT> <NONCE>
+		Lock QU to bridge to Solana. <AMOUNT> is the amount to lock, <RELAYER_FEE> is the fee for relayer (must be < AMOUNT>), <TO_ADDRESS_HEX> is the Solana recipient address as 128 hex characters (64 bytes), <NETWORK_OUT> is the destination network ID, <NONCE> is a unique order nonce.
+	-qsboverridelock <NONCE> <TO_ADDRESS_HEX> <RELAYER_FEE>
+		Override a previously locked order. <NONCE> is the nonce of the locked order, <TO_ADDRESS_HEX> is the new Solana recipient address (128 hex chars), <RELAYER_FEE> is the new relayer fee.
+	-qsbunlock <ORDER_DATA> <NUM_SIGNATURES> <SIGNATURES>
+		Unlock funds from Solana (requires oracle signatures). This is a complex operation - use invokecontractprocedure for full control.
+	-qsbtransferadmin <NEW_ADMIN_IDENTITY>
+		Transfer admin role to a new identity. Admin only.
+	-qsbeditoraclethreshold <THRESHOLD>
+		Set oracle threshold percentage (1-100). Admin only.
+	-qsbaddrole <ACCOUNT_IDENTITY> <ROLE>
+		Add role to an account. <ROLE> is 1 for Oracle or 2 for Pauser. Admin only.
+	-qsbremoverole <ACCOUNT_IDENTITY> <ROLE>
+		Remove role from an account. <ROLE> is 1 for Oracle or 2 for Pauser. Admin only.
+	-qsbpause
+		Pause the QSB contract. Admin or Pauser only.
+	-qsbunpause
+		Unpause the QSB contract. Admin or Pauser only.
+	-qsbeditfeeparameters <PROTOCOL_FEE_RECIPIENT> <ORACLE_FEE_RECIPIENT> <BPS_FEE> <PROTOCOL_FEE>
+		Edit fee parameters. <PROTOCOL_FEE_RECIPIENT> and <ORACLE_FEE_RECIPIENT> are identities (use empty string "" to skip), <BPS_FEE> is basis points (0-10000), <PROTOCOL_FEE> is percentage (0-100). Admin only.
 
 [TESTING COMMANDS]
 	-testqpifunctionsoutput

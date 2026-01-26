@@ -488,6 +488,28 @@ void print_help()
     printf("\t-qbondgetcfa\n");
     printf("\t\tGet list of commission free addresses.\n");
 
+    printf("\n[QSB (QUBIC SOLANA BRIDGE) COMMANDS]\n");
+    printf("\t-qsblock <AMOUNT> <RELAYER_FEE> <TO_ADDRESS_HEX> <NETWORK_OUT> <NONCE>\n");
+    printf("\t\tLock QU to bridge to Solana. <AMOUNT> is the amount to lock, <RELAYER_FEE> is the fee for relayer (must be < AMOUNT>), <TO_ADDRESS_HEX> is the Solana recipient address as 128 hex characters (64 bytes), <NETWORK_OUT> is the destination network ID, <NONCE> is a unique order nonce.\n");
+    printf("\t-qsboverridelock <NONCE> <TO_ADDRESS_HEX> <RELAYER_FEE>\n");
+    printf("\t\tOverride a previously locked order. <NONCE> is the nonce of the locked order, <TO_ADDRESS_HEX> is the new Solana recipient address (128 hex chars), <RELAYER_FEE> is the new relayer fee.\n");
+    printf("\t-qsbunlock <ORDER_DATA> <NUM_SIGNATURES> <SIGNATURES>\n");
+    printf("\t\tUnlock funds from Solana (requires oracle signatures). This is a complex operation - use invokecontractprocedure for full control.\n");
+    printf("\t-qsbtransferadmin <NEW_ADMIN_IDENTITY>\n");
+    printf("\t\tTransfer admin role to a new identity. Admin only.\n");
+    printf("\t-qsbeditoraclethreshold <THRESHOLD>\n");
+    printf("\t\tSet oracle threshold percentage (1-100). Admin only.\n");
+    printf("\t-qsbaddrole <ACCOUNT_IDENTITY> <ROLE>\n");
+    printf("\t\tAdd role to an account. <ROLE> is 1 for Oracle or 2 for Pauser. Admin only.\n");
+    printf("\t-qsbremoverole <ACCOUNT_IDENTITY> <ROLE>\n");
+    printf("\t\tRemove role from an account. <ROLE> is 1 for Oracle or 2 for Pauser. Admin only.\n");
+    printf("\t-qsbpause\n");
+    printf("\t\tPause the QSB contract. Admin or Pauser only.\n");
+    printf("\t-qsbunpause\n");
+    printf("\t\tUnpause the QSB contract. Admin or Pauser only.\n");
+    printf("\t-qsbeditfeeparameters <PROTOCOL_FEE_RECIPIENT> <ORACLE_FEE_RECIPIENT> <BPS_FEE> <PROTOCOL_FEE>\n");
+    printf("\t\tEdit fee parameters. <PROTOCOL_FEE_RECIPIENT> and <ORACLE_FEE_RECIPIENT> are identities (use empty string \"\" to skip), <BPS_FEE> is basis points (0-10000), <PROTOCOL_FEE> is percentage (0-100). Admin only.\n");
+
     printf("\n[TESTING COMMANDS]\n");
     printf("\t-testqpifunctionsoutput\n");
     printf("\t\tTest that output of qpi functions matches TickData and quorum tick votes for 15 ticks in the future (as specified by scheduletick offset). Requires the TESTEXA SC to be enabled.\n");
@@ -554,6 +576,8 @@ static uint32_t getContractIndex(const char* str, bool enableTestContracts)
         idx = 17;
     else if (strcasecmp(str, "QIP") == 0)
         idx = 18;
+    else if (strcasecmp(str, "QSB") == 0)
+        idx = 20;
     else
     {
         unsigned int contractCount = CONTRACT_COUNT;
@@ -2677,6 +2701,98 @@ void parseArgument(int argc, char** argv)
             break;
         }
 
+        /*****************************************
+         ***** QSB COMMANDS *****
+         *****************************************/
+
+        if (strcmp(argv[i], "-qsblock") == 0)
+        {
+            CHECK_NUMBER_OF_PARAMETERS(5)
+            g_cmd = QSB_LOCK_CMD;
+            g_qsb_amount = charToNumber(argv[i + 1]);
+            g_qsb_relayerFee = charToNumber(argv[i + 2]);
+            g_qsb_toAddressHex = argv[i + 3];
+            g_qsb_networkOut = (uint32_t)charToNumber(argv[i + 4]);
+            g_qsb_nonce = (uint32_t)charToNumber(argv[i + 5]);
+            i += 6;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+        if (strcmp(argv[i], "-qsboverridelock") == 0)
+        {
+            CHECK_NUMBER_OF_PARAMETERS(3)
+            g_cmd = QSB_OVERRIDE_LOCK_CMD;
+            g_qsb_nonce = (uint32_t)charToNumber(argv[i + 1]);
+            g_qsb_toAddressHex = argv[i + 2];
+            g_qsb_relayerFee = charToNumber(argv[i + 3]);
+            i += 4;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+        if (strcmp(argv[i], "-qsbtransferadmin") == 0)
+        {
+            CHECK_NUMBER_OF_PARAMETERS(1)
+            g_cmd = QSB_TRANSFER_ADMIN_CMD;
+            g_qsb_newAdminIdentity = argv[i + 1];
+            i += 2;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+        if (strcmp(argv[i], "-qsbeditoraclethreshold") == 0)
+        {
+            CHECK_NUMBER_OF_PARAMETERS(1)
+            g_cmd = QSB_EDIT_ORACLE_THRESHOLD_CMD;
+            g_qsb_oracleThreshold = (uint8_t)charToNumber(argv[i + 1]);
+            i += 2;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+        if (strcmp(argv[i], "-qsbaddrole") == 0)
+        {
+            CHECK_NUMBER_OF_PARAMETERS(2)
+            g_cmd = QSB_ADD_ROLE_CMD;
+            g_qsb_accountIdentity = argv[i + 1];
+            g_qsb_role = (uint8_t)charToNumber(argv[i + 2]);
+            i += 3;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+        if (strcmp(argv[i], "-qsbremoverole") == 0)
+        {
+            CHECK_NUMBER_OF_PARAMETERS(2)
+            g_cmd = QSB_REMOVE_ROLE_CMD;
+            g_qsb_accountIdentity = argv[i + 1];
+            g_qsb_role = (uint8_t)charToNumber(argv[i + 2]);
+            i += 3;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+        if (strcmp(argv[i], "-qsbpause") == 0)
+        {
+            g_cmd = QSB_PAUSE_CMD;
+            i++;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+        if (strcmp(argv[i], "-qsbunpause") == 0)
+        {
+            g_cmd = QSB_UNPAUSE_CMD;
+            i++;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+        if (strcmp(argv[i], "-qsbeditfeeparameters") == 0)
+        {
+            CHECK_NUMBER_OF_PARAMETERS(4)
+            g_cmd = QSB_EDIT_FEE_PARAMETERS_CMD;
+            g_qsb_protocolFeeRecipientIdentity = argv[i + 1];
+            g_qsb_oracleFeeRecipientIdentity = argv[i + 2];
+            g_qsb_bpsFee = (uint32_t)charToNumber(argv[i + 3]);
+            g_qsb_protocolFee = (uint32_t)charToNumber(argv[i + 4]);
+            i += 5;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
 
         /*****************************************
          ***** SHAREHOLDER PROPOSAL COMMANDS *****

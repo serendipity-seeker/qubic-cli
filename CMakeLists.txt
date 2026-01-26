@@ -23,6 +23,7 @@ SET(FILES 	${CMAKE_SOURCE_DIR}/asset_utils.cpp
 		${CMAKE_SOURCE_DIR}/test_utils.cpp
 		${CMAKE_SOURCE_DIR}/wallet_utils.cpp
 		${CMAKE_SOURCE_DIR}/utils.cpp
+		${CMAKE_SOURCE_DIR}/qsb.cpp
 )
 SET(HEADER_FILES
 	argparser.h	
@@ -55,6 +56,7 @@ SET(HEADER_FILES
 	test_utils.h
 	utils.h
 	wallet_utils.h
+	qsb.h
 )
 
 if(MSVC)

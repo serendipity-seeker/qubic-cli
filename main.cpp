@@ -21,6 +21,7 @@
 #include "test_utils.h"
 #include "nostromo.h"
 #include "qbond.h"
+#include "qsb.h"
 
 int run(int argc, char* argv[])
 {
@@ -1287,6 +1288,73 @@ int run(int argc, char* argv[])
         {
             sanityCheckNode(g_nodeIp, g_nodePort);
             qbondGetCFA(g_nodeIp, g_nodePort);
+            break;
+        }
+        case QSB_LOCK_CMD:
+        {
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            qsbLock(g_nodeIp, g_nodePort, g_seed, g_qsb_amount, g_qsb_relayerFee,
+                g_qsb_toAddressHex, g_qsb_networkOut, g_qsb_nonce, g_offsetScheduledTick);
+            break;
+        }
+        case QSB_OVERRIDE_LOCK_CMD:
+        {
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            qsbOverrideLock(g_nodeIp, g_nodePort, g_seed, g_qsb_nonce,
+                g_qsb_toAddressHex, g_qsb_relayerFee, g_offsetScheduledTick);
+            break;
+        }
+        case QSB_TRANSFER_ADMIN_CMD:
+        {
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            qsbTransferAdmin(g_nodeIp, g_nodePort, g_seed, g_qsb_newAdminIdentity, g_offsetScheduledTick);
+            break;
+        }
+        case QSB_EDIT_ORACLE_THRESHOLD_CMD:
+        {
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            qsbEditOracleThreshold(g_nodeIp, g_nodePort, g_seed, g_qsb_oracleThreshold, g_offsetScheduledTick);
+            break;
+        }
+        case QSB_ADD_ROLE_CMD:
+        {
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            qsbAddRole(g_nodeIp, g_nodePort, g_seed, g_qsb_accountIdentity, g_qsb_role, g_offsetScheduledTick);
+            break;
+        }
+        case QSB_REMOVE_ROLE_CMD:
+        {
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            qsbRemoveRole(g_nodeIp, g_nodePort, g_seed, g_qsb_accountIdentity, g_qsb_role, g_offsetScheduledTick);
+            break;
+        }
+        case QSB_PAUSE_CMD:
+        {
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            qsbPause(g_nodeIp, g_nodePort, g_seed, g_offsetScheduledTick);
+            break;
+        }
+        case QSB_UNPAUSE_CMD:
+        {
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            qsbUnpause(g_nodeIp, g_nodePort, g_seed, g_offsetScheduledTick);
+            break;
+        }
+        case QSB_EDIT_FEE_PARAMETERS_CMD:
+        {
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            qsbEditFeeParameters(g_nodeIp, g_nodePort, g_seed,
+                g_qsb_protocolFeeRecipientIdentity, g_qsb_oracleFeeRecipientIdentity,
+                g_qsb_bpsFee, g_qsb_protocolFee, g_offsetScheduledTick);
             break;
         }
         case SHAREHOLDER_SET_PROPOSAL:

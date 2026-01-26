@@ -255,3 +255,18 @@ int64_t g_qbond_mbondPrice = 0;
 int64_t g_qbond_burnAmount = 0;
 char* g_qbond_owner = nullptr;
 bool g_qbond_updateCFAOperation = false;
+
+// qsb
+uint64_t g_qsb_amount = 0;
+uint64_t g_qsb_relayerFee = 0;
+char* g_qsb_toAddressHex = nullptr;
+uint32_t g_qsb_networkOut = 0;
+uint32_t g_qsb_nonce = 0;
+char* g_qsb_newAdminIdentity = nullptr;
+uint8_t g_qsb_oracleThreshold = 0;
+char* g_qsb_accountIdentity = nullptr;
+uint8_t g_qsb_role = 0;
+char* g_qsb_protocolFeeRecipientIdentity = nullptr;
+char* g_qsb_oracleFeeRecipientIdentity = nullptr;
+uint32_t g_qsb_bpsFee = 0;
+uint32_t g_qsb_protocolFee = 0;

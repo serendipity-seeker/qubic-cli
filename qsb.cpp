@@ -2,6 +2,7 @@
 #include "wallet_utils.h"
 #include "key_utils.h"
 #include "sanity_check.h"
+#include "logger.h"
 #include <cstring>
 #include <iostream>
 #include <iomanip>
@@ -280,4 +281,136 @@ void qsbEditFeeParameters(const char* nodeIp, int nodePort, const char* seed,
     makeContractTransaction(nodeIp, nodePort, seed,
         QSB_CONTRACT_INDEX, QSB_PROC_EDIT_FEE_PARAMETERS, 0,
         sizeof(input), &input, scheduledTickOffset);
+}
+
+// ---------------------------------------------------------------------------
+// View / helper functions
+// ---------------------------------------------------------------------------
+
+// Function numbers for view helpers (see contract REGISTER_USER_FUNCTION)
+static constexpr uint16_t QSB_FUNC_GET_CONFIG = 1;
+static constexpr uint16_t QSB_FUNC_IS_ORACLE = 2;
+static constexpr uint16_t QSB_FUNC_IS_PAUSER = 3;
+static constexpr uint16_t QSB_FUNC_GET_LOCKED = 4;
+static constexpr uint16_t QSB_FUNC_IS_ORDER_FILLED = 5;
+
+void qsbGetConfig(const char* nodeIp, int nodePort)
+{
+    QSB_GetConfig_output result;
+    if (!runContractFunction(nodeIp, nodePort, QSB_CONTRACT_INDEX, QSB_FUNC_GET_CONFIG,
+            nullptr, 0, &result, sizeof(result)))
+    {
+        LOG("Failed to receive QSB config.\n");
+        return;
+    }
+
+    char adminId[128] = {0};
+    char protoId[128] = {0};
+    char oracleId[128] = {0};
+
+    getIdentityFromPublicKey(result.admin, adminId, false);
+    getIdentityFromPublicKey(result.protocolFeeRecipient, protoId, false);
+    getIdentityFromPublicKey(result.oracleFeeRecipient, oracleId, false);
+
+    std::cout << "QSB Configuration\n";
+    std::cout << "-----------------\n";
+    std::cout << "Admin: " << adminId << "\n";
+    std::cout << "Protocol fee recipient: " << protoId << "\n";
+    std::cout << "Oracle fee recipient:   " << oracleId << "\n";
+    std::cout << "bpsFee: " << result.bpsFee << "\n";
+    std::cout << "protocolFee: " << result.protocolFee << "\n";
+    std::cout << "oracleCount: " << result.oracleCount << "\n";
+    std::cout << "oracleThreshold: " << (int)result.oracleThreshold << "%\n";
+    std::cout << "paused: " << (result.paused ? "yes" : "no") << "\n";
+}
+
+void qsbIsOracle(const char* nodeIp, int nodePort, const char* accountIdentity)
+{
+    QSB_IsRole_input input{};
+    getPublicKeyFromIdentity(accountIdentity, input.account);
+
+    QSB_IsOracle_output result;
+    if (!runContractFunction(nodeIp, nodePort, QSB_CONTRACT_INDEX, QSB_FUNC_IS_ORACLE,
+            &input, sizeof(input), &result, sizeof(result)))
+    {
+        LOG("Failed to receive QSB IsOracle result.\n");
+        return;
+    }
+
+    std::cout << (result.isOracle ? "true" : "false") << "\n";
+}
+
+void qsbIsPauser(const char* nodeIp, int nodePort, const char* accountIdentity)
+{
+    QSB_IsRole_input input{};
+    getPublicKeyFromIdentity(accountIdentity, input.account);
+
+    QSB_IsPauser_output result;
+    if (!runContractFunction(nodeIp, nodePort, QSB_CONTRACT_INDEX, QSB_FUNC_IS_PAUSER,
+            &input, sizeof(input), &result, sizeof(result)))
+    {
+        LOG("Failed to receive QSB IsPauser result.\n");
+        return;
+    }
+
+    std::cout << (result.isPauser ? "true" : "false") << "\n";
+}
+
+void qsbGetLockedOrder(const char* nodeIp, int nodePort, uint32_t nonce)
+{
+    QSB_GetLockedOrder_input input{};
+    input.nonce = nonce;
+
+    QSB_GetLockedOrder_output result;
+    if (!runContractFunction(nodeIp, nodePort, QSB_CONTRACT_INDEX, QSB_FUNC_GET_LOCKED,
+            &input, sizeof(input), &result, sizeof(result)))
+    {
+        LOG("Failed to receive QSB locked order.\n");
+        return;
+    }
+
+    if (!result.exists)
+    {
+        std::cout << "No locked order found for nonce " << nonce << ".\n";
+        return;
+    }
+
+    char senderId[128] = {0};
+    getIdentityFromPublicKey(result.order.sender, senderId, false);
+
+    std::cout << "Locked order for nonce " << nonce << ":\n";
+    std::cout << "  sender: " << senderId << "\n";
+    std::cout << "  amount: " << result.order.amount << "\n";
+    std::cout << "  relayerFee: " << result.order.relayerFee << "\n";
+    std::cout << "  networkOut: " << result.order.networkOut << "\n";
+    std::cout << "  active: " << (result.order.active ? "yes" : "no") << "\n";
+
+    std::cout << "  orderHash: ";
+    printOrderHash(result.order.orderHash);
+}
+
+void qsbIsOrderFilled(const char* nodeIp, int nodePort, const char* orderHashHex)
+{
+    if (!orderHashHex)
+    {
+        LOG("order hash must be provided.\n");
+        return;
+    }
+
+    QSB_IsOrderFilled_input input{};
+    if (!hexStringToBytes(orderHashHex, input.hash.hash, 32))
+    {
+        std::cout << "ERROR: Invalid order hash hex string. Must be 64 hex characters (32 bytes)." << std::endl;
+        return;
+    }
+
+    QSB_IsOrderFilled_output result;
+    if (!runContractFunction(nodeIp, nodePort, QSB_CONTRACT_INDEX, QSB_FUNC_IS_ORDER_FILLED,
+            &input, sizeof(input), &result, sizeof(result)))
+    {
+        LOG("Failed to receive QSB IsOrderFilled result.\n");
+        return;
+    }
+
+    std::cout << (result.filled ? "true" : "false") << "\n";
 }

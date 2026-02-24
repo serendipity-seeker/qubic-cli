@@ -174,6 +174,102 @@ struct QSB_EditFeeParameters_output
     uint8_t _padding[7];
 };
 
+// ---------------------------------------------------------------------------
+// View function structs
+// ---------------------------------------------------------------------------
+
+// GetConfig()
+struct QSB_GetConfig_output
+{
+    uint8_t admin[32];
+    uint8_t protocolFeeRecipient[32];
+    uint8_t oracleFeeRecipient[32];
+    uint32_t bpsFee;
+    uint32_t protocolFee;
+    uint32_t oracleCount;
+    uint8_t oracleThreshold;
+    uint8_t paused;
+
+    static constexpr unsigned char type()
+    {
+        return RespondContractFunction::type();
+    }
+};
+
+// IsOracle() / IsPauser()
+struct QSB_IsRole_input
+{
+    uint8_t account[32];
+};
+
+struct QSB_IsOracle_output
+{
+    uint8_t isOracle;
+
+    static constexpr unsigned char type()
+    {
+        return RespondContractFunction::type();
+    }
+};
+
+struct QSB_IsPauser_output
+{
+    uint8_t isPauser;
+
+    static constexpr unsigned char type()
+    {
+        return RespondContractFunction::type();
+    }
+};
+
+// LockedOrderEntry used by GetLockedOrder()
+struct QSB_LockedOrderEntry
+{
+    uint8_t sender[32];
+    uint64_t amount;
+    uint64_t relayerFee;
+    uint32_t networkOut;
+    uint32_t nonce;
+    uint8_t toAddress[64];
+    QSB_OrderHash orderHash;
+    uint8_t active;
+    uint8_t _padding[7];
+};
+
+struct QSB_GetLockedOrder_input
+{
+    uint32_t nonce;
+};
+
+struct QSB_GetLockedOrder_output
+{
+    uint8_t exists;
+    uint8_t _padding[7];
+    QSB_LockedOrderEntry order;
+
+    static constexpr unsigned char type()
+    {
+        return RespondContractFunction::type();
+    }
+};
+
+// IsOrderFilled()
+struct QSB_IsOrderFilled_input
+{
+    QSB_OrderHash hash;
+};
+
+struct QSB_IsOrderFilled_output
+{
+    uint8_t filled;
+    uint8_t _padding[7];
+
+    static constexpr unsigned char type()
+    {
+        return RespondContractFunction::type();
+    }
+};
+
 // Function declarations
 void qsbLock(const char* nodeIp, int nodePort, const char* seed,
     uint64_t amount, uint64_t relayerFee, const char* toAddressHex,
@@ -208,3 +304,10 @@ void qsbUnpause(const char* nodeIp, int nodePort, const char* seed,
 void qsbEditFeeParameters(const char* nodeIp, int nodePort, const char* seed,
     const char* protocolFeeRecipientIdentity, const char* oracleFeeRecipientIdentity,
     uint32_t bpsFee, uint32_t protocolFee, uint32_t scheduledTickOffset);
+
+// View / helper functions
+void qsbGetConfig(const char* nodeIp, int nodePort);
+void qsbIsOracle(const char* nodeIp, int nodePort, const char* accountIdentity);
+void qsbIsPauser(const char* nodeIp, int nodePort, const char* accountIdentity);
+void qsbGetLockedOrder(const char* nodeIp, int nodePort, uint32_t nonce);
+void qsbIsOrderFilled(const char* nodeIp, int nodePort, const char* orderHashHex);

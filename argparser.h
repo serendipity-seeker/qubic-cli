@@ -509,6 +509,16 @@ void print_help()
     printf("\t\tUnpause the QSB contract. Admin or Pauser only.\n");
     printf("\t-qsbeditfeeparameters <PROTOCOL_FEE_RECIPIENT> <ORACLE_FEE_RECIPIENT> <BPS_FEE> <PROTOCOL_FEE>\n");
     printf("\t\tEdit fee parameters. <PROTOCOL_FEE_RECIPIENT> and <ORACLE_FEE_RECIPIENT> are identities (use empty string \"\" to skip), <BPS_FEE> is basis points (0-10000), <PROTOCOL_FEE> is percentage (0-100). Admin only.\n");
+    printf("\t-qsbgetconfig\n");
+    printf("\t\tGet QSB configuration (admin, fee recipients, fees, oracle parameters, paused state).\n");
+    printf("\t-qsbisoracle <ACCOUNT_IDENTITY>\n");
+    printf("\t\tCheck if an account has Oracle role in QSB.\n");
+    printf("\t-qsbispauser <ACCOUNT_IDENTITY>\n");
+    printf("\t\tCheck if an account has Pauser role in QSB.\n");
+    printf("\t-qsbgetlockedorder <NONCE>\n");
+    printf("\t\tGet information about a locked order by nonce.\n");
+    printf("\t-qsbisorderfilled <ORDER_HASH_HEX>\n");
+    printf("\t\tCheck if an order hash has already been filled in QSB (64 hex chars).\n");
 
     printf("\n[TESTING COMMANDS]\n");
     printf("\t-testqpifunctionsoutput\n");
@@ -2790,6 +2800,49 @@ void parseArgument(int argc, char** argv)
             g_qsb_bpsFee = (uint32_t)charToNumber(argv[i + 3]);
             g_qsb_protocolFee = (uint32_t)charToNumber(argv[i + 4]);
             i += 5;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+        if (strcmp(argv[i], "-qsbgetconfig") == 0)
+        {
+            g_cmd = QSB_GET_CONFIG_CMD;
+            i += 1;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+        if (strcmp(argv[i], "-qsbisoracle") == 0)
+        {
+            CHECK_NUMBER_OF_PARAMETERS(1)
+            g_cmd = QSB_IS_ORACLE_CMD;
+            g_qsb_viewIdentity = argv[i + 1];
+            i += 2;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+        if (strcmp(argv[i], "-qsbispauser") == 0)
+        {
+            CHECK_NUMBER_OF_PARAMETERS(1)
+            g_cmd = QSB_IS_PAUSER_CMD;
+            g_qsb_viewIdentity = argv[i + 1];
+            i += 2;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+        if (strcmp(argv[i], "-qsbgetlockedorder") == 0)
+        {
+            CHECK_NUMBER_OF_PARAMETERS(1)
+            g_cmd = QSB_GET_LOCKED_ORDER_CMD;
+            g_qsb_viewNonce = (uint32_t)charToNumber(argv[i + 1]);
+            i += 2;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+        if (strcmp(argv[i], "-qsbisorderfilled") == 0)
+        {
+            CHECK_NUMBER_OF_PARAMETERS(1)
+            g_cmd = QSB_IS_ORDER_FILLED_CMD;
+            g_qsb_orderHashHex = argv[i + 1];
+            i += 2;
             CHECK_OVER_PARAMETERS
             break;
         }

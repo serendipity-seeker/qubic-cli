@@ -458,6 +458,16 @@ Commands:
 		Unpause the QSB contract. Admin or Pauser only.
 	-qsbeditfeeparameters <PROTOCOL_FEE_RECIPIENT> <ORACLE_FEE_RECIPIENT> <BPS_FEE> <PROTOCOL_FEE>
 		Edit fee parameters. <PROTOCOL_FEE_RECIPIENT> and <ORACLE_FEE_RECIPIENT> are identities (use empty string "" to skip), <BPS_FEE> is basis points (0-10000), <PROTOCOL_FEE> is percentage (0-100). Admin only.
+	-qsbgetconfig
+		Get QSB configuration (admin, fee recipients, fees, oracle parameters, paused state).
+	-qsbisoracle <ACCOUNT_IDENTITY>
+		Check if an account has Oracle role in QSB.
+	-qsbispauser <ACCOUNT_IDENTITY>
+		Check if an account has Pauser role in QSB.
+	-qsbgetlockedorder <NONCE>
+		Get information about a locked order by nonce.
+	-qsbisorderfilled <ORDER_HASH_HEX>
+		Check if an order hash has already been filled in QSB (64 hex chars).
 
 [TESTING COMMANDS]
 	-testqpifunctionsoutput

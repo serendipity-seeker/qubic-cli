@@ -270,3 +270,6 @@ char* g_qsb_protocolFeeRecipientIdentity = nullptr;
 char* g_qsb_oracleFeeRecipientIdentity = nullptr;
 uint32_t g_qsb_bpsFee = 0;
 uint32_t g_qsb_protocolFee = 0;
+char* g_qsb_viewIdentity = nullptr;
+uint32_t g_qsb_viewNonce = 0;
+char* g_qsb_orderHashHex = nullptr;

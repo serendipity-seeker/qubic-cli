@@ -28,6 +28,7 @@
 #include "nostromo.h"
 #include "qutil.h"
 #include "qbond.h"
+#include "qsb.h"
 
 #define DEFAULT_TIMEOUT_MSEC 1000
 
@@ -410,3 +411,10 @@ template GetCurrentResult_output QubicConnection::receivePacketWithHeaderAs<GetC
 template GetPollsByCreator_output QubicConnection::receivePacketWithHeaderAs<GetPollsByCreator_output>();
 template GetCurrentPollId_output QubicConnection::receivePacketWithHeaderAs<GetCurrentPollId_output>();
 template GetPollInfo_output QubicConnection::receivePacketWithHeaderAs<GetPollInfo_output>();
+
+// QSB
+template QSB_GetConfig_output QubicConnection::receivePacketWithHeaderAs<QSB_GetConfig_output>();
+template QSB_IsOracle_output QubicConnection::receivePacketWithHeaderAs<QSB_IsOracle_output>();
+template QSB_IsPauser_output QubicConnection::receivePacketWithHeaderAs<QSB_IsPauser_output>();
+template QSB_GetLockedOrder_output QubicConnection::receivePacketWithHeaderAs<QSB_GetLockedOrder_output>();
+template QSB_IsOrderFilled_output QubicConnection::receivePacketWithHeaderAs<QSB_IsOrderFilled_output>();

@@ -1357,6 +1357,38 @@ int run(int argc, char* argv[])
                 g_qsb_bpsFee, g_qsb_protocolFee, g_offsetScheduledTick);
             break;
         }
+        case QSB_GET_CONFIG_CMD:
+        {
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            qsbGetConfig(g_nodeIp, g_nodePort);
+            break;
+        }
+        case QSB_IS_ORACLE_CMD:
+        {
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckIdentity(g_qsb_viewIdentity);
+            qsbIsOracle(g_nodeIp, g_nodePort, g_qsb_viewIdentity);
+            break;
+        }
+        case QSB_IS_PAUSER_CMD:
+        {
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckIdentity(g_qsb_viewIdentity);
+            qsbIsPauser(g_nodeIp, g_nodePort, g_qsb_viewIdentity);
+            break;
+        }
+        case QSB_GET_LOCKED_ORDER_CMD:
+        {
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            qsbGetLockedOrder(g_nodeIp, g_nodePort, g_qsb_viewNonce);
+            break;
+        }
+        case QSB_IS_ORDER_FILLED_CMD:
+        {
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            qsbIsOrderFilled(g_nodeIp, g_nodePort, g_qsb_orderHashHex);
+            break;
+        }
         case SHAREHOLDER_SET_PROPOSAL:
             sanityCheckNode(g_nodeIp, g_nodePort);
             sanityCheckSeed(g_seed);

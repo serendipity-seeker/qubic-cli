@@ -493,6 +493,8 @@ void print_help()
     printf("\t\tLock QU to bridge to Solana. <AMOUNT> is the amount to lock, <RELAYER_FEE> is the fee for relayer (must be < AMOUNT>), <TO_ADDRESS_HEX> is the Solana recipient address as 128 hex characters (64 bytes), <NETWORK_OUT> is the destination network ID, <NONCE> is a unique order nonce.\n");
     printf("\t-qsboverridelock <NONCE> <TO_ADDRESS_HEX> <RELAYER_FEE>\n");
     printf("\t\tOverride a previously locked order. <NONCE> is the nonce of the locked order, <TO_ADDRESS_HEX> is the new Solana recipient address (128 hex chars), <RELAYER_FEE> is the new relayer fee.\n");
+    printf("\t-qsbcancellock <NONCE>\n");
+    printf("\t\tCancel a locked order and refund QU to sender. Only the original sender can cancel. <NONCE> is the nonce of the locked order.\n");
     printf("\t-qsbunlock <ORDER_DATA> <NUM_SIGNATURES> <SIGNATURES>\n");
     printf("\t\tUnlock funds from Solana (requires oracle signatures). This is a complex operation - use invokecontractprocedure for full control.\n");
     printf("\t-qsbtransferadmin <NEW_ADMIN_IDENTITY>\n");
@@ -519,6 +521,16 @@ void print_help()
     printf("\t\tGet information about a locked order by nonce.\n");
     printf("\t-qsbisorderfilled <ORDER_HASH_HEX>\n");
     printf("\t\tCheck if an order hash has already been filled in QSB (64 hex chars).\n");
+    printf("\t-qsbcomputeorderhash <FROM_ID> <TO_ID> <AMOUNT> <RELAYER_FEE> <DEST_CHAIN> <NET_IN> <NET_OUT> <NONCE>\n");
+    printf("\t\tCompute canonical order hash for verification.\n");
+    printf("\t-qsbgetoracles\n");
+    printf("\t\tList all oracle accounts.\n");
+    printf("\t-qsbgetpausers\n");
+    printf("\t\tList all pauser accounts.\n");
+    printf("\t-qsbgetlockedorders [OFFSET] [LIMIT]\n");
+    printf("\t\tList locked orders (paginated, default offset=0 limit=64).\n");
+    printf("\t-qsbgetfilledorders [OFFSET] [LIMIT]\n");
+    printf("\t\tList filled order hashes (paginated, default offset=0 limit=64).\n");
 
     printf("\n[TESTING COMMANDS]\n");
     printf("\t-testqpifunctionsoutput\n");
@@ -2739,6 +2751,15 @@ void parseArgument(int argc, char** argv)
             CHECK_OVER_PARAMETERS
             break;
         }
+        if (strcmp(argv[i], "-qsbcancellock") == 0)
+        {
+            CHECK_NUMBER_OF_PARAMETERS(1)
+            g_cmd = QSB_CANCEL_LOCK_CMD;
+            g_qsb_nonce = (uint32_t)charToNumber(argv[i + 1]);
+            i += 2;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
         if (strcmp(argv[i], "-qsbtransferadmin") == 0)
         {
             CHECK_NUMBER_OF_PARAMETERS(1)
@@ -2843,6 +2864,74 @@ void parseArgument(int argc, char** argv)
             g_cmd = QSB_IS_ORDER_FILLED_CMD;
             g_qsb_orderHashHex = argv[i + 1];
             i += 2;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+        if (strcmp(argv[i], "-qsbcomputeorderhash") == 0)
+        {
+            CHECK_NUMBER_OF_PARAMETERS(8)
+            g_cmd = QSB_COMPUTE_ORDER_HASH_CMD;
+            g_qsb_computeOrderFromId = argv[i + 1];
+            g_qsb_computeOrderToId = argv[i + 2];
+            g_qsb_computeOrderAmount = (uint64_t)charToNumber(argv[i + 3]);
+            g_qsb_computeOrderRelayerFee = (uint64_t)charToNumber(argv[i + 4]);
+            g_qsb_computeOrderDestChain = (uint32_t)charToNumber(argv[i + 5]);
+            g_qsb_computeOrderNetIn = (uint32_t)charToNumber(argv[i + 6]);
+            g_qsb_computeOrderNetOut = (uint32_t)charToNumber(argv[i + 7]);
+            g_qsb_computeOrderNonce = (uint32_t)charToNumber(argv[i + 8]);
+            i += 9;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+        if (strcmp(argv[i], "-qsbgetoracles") == 0)
+        {
+            g_cmd = QSB_GET_ORACLES_CMD;
+            ++i;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+        if (strcmp(argv[i], "-qsbgetpausers") == 0)
+        {
+            g_cmd = QSB_GET_PAUSERS_CMD;
+            ++i;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+        if (strcmp(argv[i], "-qsbgetlockedorders") == 0)
+        {
+            g_cmd = QSB_GET_LOCKED_ORDERS_CMD;
+            g_qsb_viewOffset = 0;
+            g_qsb_viewLimit = 64;
+            if (i + 1 < argc && argv[i + 1][0] != '-')
+            {
+                g_qsb_viewOffset = (uint32_t)charToNumber(argv[i + 1]);
+                ++i;
+                if (i + 1 < argc && argv[i + 1][0] != '-')
+                {
+                    g_qsb_viewLimit = (uint32_t)charToNumber(argv[i + 1]);
+                    ++i;
+                }
+            }
+            ++i;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+        if (strcmp(argv[i], "-qsbgetfilledorders") == 0)
+        {
+            g_cmd = QSB_GET_FILLED_ORDERS_CMD;
+            g_qsb_viewOffset = 0;
+            g_qsb_viewLimit = 64;
+            if (i + 1 < argc && argv[i + 1][0] != '-')
+            {
+                g_qsb_viewOffset = (uint32_t)charToNumber(argv[i + 1]);
+                ++i;
+                if (i + 1 < argc && argv[i + 1][0] != '-')
+                {
+                    g_qsb_viewLimit = (uint32_t)charToNumber(argv[i + 1]);
+                    ++i;
+                }
+            }
+            ++i;
             CHECK_OVER_PARAMETERS
             break;
         }

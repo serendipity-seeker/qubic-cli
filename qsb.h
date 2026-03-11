@@ -6,12 +6,13 @@
 
 // QSB Contract Index - needs to be set when contract is deployed
 // For now, using a placeholder that can be configured
-#define QSB_CONTRACT_INDEX 19  // Update this when contract is deployed
+#define QSB_CONTRACT_INDEX 24  // Update this when contract is deployed
 
 // Procedure numbers (matching the contract)
 #define QSB_PROC_LOCK 1
 #define QSB_PROC_OVERRIDE_LOCK 2
 #define QSB_PROC_UNLOCK 3
+#define QSB_PROC_CANCEL_LOCK 4
 #define QSB_PROC_TRANSFER_ADMIN 10
 #define QSB_PROC_EDIT_ORACLE_THRESHOLD 11
 #define QSB_PROC_ADD_ROLE 12
@@ -74,6 +75,18 @@ struct QSB_OverrideLock_input
 struct QSB_OverrideLock_output
 {
     QSB_OrderHash orderHash;
+    uint8_t success;
+    uint8_t _padding[7];
+};
+
+// CancelLock input/output (procedure 4: cancel own locked order, refund)
+struct QSB_CancelLock_input
+{
+    uint32_t nonce;
+};
+
+struct QSB_CancelLock_output
+{
     uint8_t success;
     uint8_t _padding[7];
 };
@@ -187,6 +200,7 @@ struct QSB_GetConfig_output
     uint32_t bpsFee;
     uint32_t protocolFee;
     uint32_t oracleCount;
+    uint32_t pauserCount;
     uint8_t oracleThreshold;
     uint8_t paused;
 
@@ -222,7 +236,7 @@ struct QSB_IsPauser_output
     }
 };
 
-// LockedOrderEntry used by GetLockedOrder()
+// LockedOrderEntry used by GetLockedOrder() and GetLockedOrders()
 struct QSB_LockedOrderEntry
 {
     uint8_t sender[32];
@@ -232,8 +246,9 @@ struct QSB_LockedOrderEntry
     uint32_t nonce;
     uint8_t toAddress[64];
     QSB_OrderHash orderHash;
+    uint32_t lockEpoch;
     uint8_t active;
-    uint8_t _padding[7];
+    uint8_t _padding[3];
 };
 
 struct QSB_GetLockedOrder_input
@@ -270,6 +285,86 @@ struct QSB_IsOrderFilled_output
     }
 };
 
+// ComputeOrderHash() - input: Order, output: OrderHash
+struct QSB_ComputeOrderHash_input
+{
+    QSB_Order order;
+};
+
+struct QSB_ComputeOrderHash_output
+{
+    QSB_OrderHash hash;
+
+    static constexpr unsigned char type()
+    {
+        return RespondContractFunction::type();
+    }
+};
+
+// GetOracles() - bulk enumeration
+struct QSB_GetOracles_output
+{
+    uint32_t count;
+    uint8_t accounts[64][32];  // QSB_MAX_ORACLES * 32 bytes
+
+    static constexpr unsigned char type()
+    {
+        return RespondContractFunction::type();
+    }
+};
+
+// GetPausers() - bulk enumeration
+struct QSB_GetPausers_output
+{
+    uint32_t count;
+    uint8_t accounts[32][32];  // QSB_MAX_PAUSERS * 32 bytes
+
+    static constexpr unsigned char type()
+    {
+        return RespondContractFunction::type();
+    }
+};
+
+// GetLockedOrders() - paginated
+#define QSB_QUERY_MAX_PAGE_SIZE 64
+
+struct QSB_GetLockedOrders_input
+{
+    uint32_t offset;
+    uint32_t limit;
+};
+
+struct QSB_GetLockedOrders_output
+{
+    uint32_t totalActive;
+    uint32_t returned;
+    QSB_LockedOrderEntry entries[QSB_QUERY_MAX_PAGE_SIZE];
+
+    static constexpr unsigned char type()
+    {
+        return RespondContractFunction::type();
+    }
+};
+
+// GetFilledOrders() - paginated
+struct QSB_GetFilledOrders_input
+{
+    uint32_t offset;
+    uint32_t limit;
+};
+
+struct QSB_GetFilledOrders_output
+{
+    uint32_t totalActive;
+    uint32_t returned;
+    QSB_OrderHash hashes[QSB_QUERY_MAX_PAGE_SIZE];
+
+    static constexpr unsigned char type()
+    {
+        return RespondContractFunction::type();
+    }
+};
+
 // Function declarations
 void qsbLock(const char* nodeIp, int nodePort, const char* seed,
     uint64_t amount, uint64_t relayerFee, const char* toAddressHex,
@@ -278,6 +373,9 @@ void qsbLock(const char* nodeIp, int nodePort, const char* seed,
 void qsbOverrideLock(const char* nodeIp, int nodePort, const char* seed,
     uint32_t nonce, const char* toAddressHex, uint64_t relayerFee,
     uint32_t scheduledTickOffset);
+
+void qsbCancelLock(const char* nodeIp, int nodePort, const char* seed,
+    uint32_t nonce, uint32_t scheduledTickOffset);
 
 void qsbUnlock(const char* nodeIp, int nodePort, const char* seed,
     const QSB_Order* order, uint32_t numSignatures,
@@ -311,3 +409,11 @@ void qsbIsOracle(const char* nodeIp, int nodePort, const char* accountIdentity);
 void qsbIsPauser(const char* nodeIp, int nodePort, const char* accountIdentity);
 void qsbGetLockedOrder(const char* nodeIp, int nodePort, uint32_t nonce);
 void qsbIsOrderFilled(const char* nodeIp, int nodePort, const char* orderHashHex);
+void qsbComputeOrderHash(const char* nodeIp, int nodePort,
+    const char* fromIdentity, const char* toIdentity,
+    uint64_t amount, uint64_t relayerFee, uint32_t destinationChainId,
+    uint32_t networkIn, uint32_t networkOut, uint32_t nonce);
+void qsbGetOracles(const char* nodeIp, int nodePort);
+void qsbGetPausers(const char* nodeIp, int nodePort);
+void qsbGetLockedOrders(const char* nodeIp, int nodePort, uint32_t offset, uint32_t limit);
+void qsbGetFilledOrders(const char* nodeIp, int nodePort, uint32_t offset, uint32_t limit);

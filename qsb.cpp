@@ -113,6 +113,20 @@ void qsbOverrideLock(const char* nodeIp, int nodePort, const char* seed,
         sizeof(input), &input, scheduledTickOffset);
 }
 
+void qsbCancelLock(const char* nodeIp, int nodePort, const char* seed,
+    uint32_t nonce, uint32_t scheduledTickOffset)
+{
+    QSB_CancelLock_input input;
+    memset(&input, 0, sizeof(input));
+    input.nonce = nonce;
+
+    std::cout << "Cancelling locked order for nonce " << nonce << "..." << std::endl;
+
+    makeContractTransaction(nodeIp, nodePort, seed,
+        QSB_CONTRACT_INDEX, QSB_PROC_CANCEL_LOCK, 0,
+        sizeof(input), &input, scheduledTickOffset);
+}
+
 void qsbUnlock(const char* nodeIp, int nodePort, const char* seed,
     const QSB_Order* order, uint32_t numSignatures,
     const QSB_SignatureData* signatures, uint32_t scheduledTickOffset)
@@ -293,6 +307,11 @@ static constexpr uint16_t QSB_FUNC_IS_ORACLE = 2;
 static constexpr uint16_t QSB_FUNC_IS_PAUSER = 3;
 static constexpr uint16_t QSB_FUNC_GET_LOCKED = 4;
 static constexpr uint16_t QSB_FUNC_IS_ORDER_FILLED = 5;
+static constexpr uint16_t QSB_FUNC_COMPUTE_ORDER_HASH = 6;
+static constexpr uint16_t QSB_FUNC_GET_ORACLES = 7;
+static constexpr uint16_t QSB_FUNC_GET_PAUSERS = 8;
+static constexpr uint16_t QSB_FUNC_GET_LOCKED_ORDERS = 9;
+static constexpr uint16_t QSB_FUNC_GET_FILLED_ORDERS = 10;
 
 void qsbGetConfig(const char* nodeIp, int nodePort)
 {
@@ -320,6 +339,7 @@ void qsbGetConfig(const char* nodeIp, int nodePort)
     std::cout << "bpsFee: " << result.bpsFee << "\n";
     std::cout << "protocolFee: " << result.protocolFee << "\n";
     std::cout << "oracleCount: " << result.oracleCount << "\n";
+    std::cout << "pauserCount: " << result.pauserCount << "\n";
     std::cout << "oracleThreshold: " << (int)result.oracleThreshold << "%\n";
     std::cout << "paused: " << (result.paused ? "yes" : "no") << "\n";
 }
@@ -404,13 +424,139 @@ void qsbIsOrderFilled(const char* nodeIp, int nodePort, const char* orderHashHex
         return;
     }
 
-    QSB_IsOrderFilled_output result;
+    // Qubic VM serializes `bit` as 1 byte; struct with padding would expect 8 bytes
+    uint8_t filledByte = 0;
     if (!runContractFunction(nodeIp, nodePort, QSB_CONTRACT_INDEX, QSB_FUNC_IS_ORDER_FILLED,
-            &input, sizeof(input), &result, sizeof(result)))
+            &input, sizeof(input), &filledByte, 1))
     {
         LOG("Failed to receive QSB IsOrderFilled result.\n");
         return;
     }
 
-    std::cout << (result.filled ? "true" : "false") << "\n";
+    std::cout << (filledByte ? "true" : "false") << "\n";
+}
+
+void qsbComputeOrderHash(const char* nodeIp, int nodePort,
+    const char* fromIdentity, const char* toIdentity,
+    uint64_t amount, uint64_t relayerFee, uint32_t destinationChainId,
+    uint32_t networkIn, uint32_t networkOut, uint32_t nonce)
+{
+    QSB_ComputeOrderHash_input input{};
+    sanityCheckIdentity(fromIdentity);
+    sanityCheckIdentity(toIdentity);
+    getPublicKeyFromIdentity(fromIdentity, input.order.fromAddress);
+    getPublicKeyFromIdentity(toIdentity, input.order.toAddress);
+    input.order.amount = amount;
+    input.order.relayerFee = relayerFee;
+    input.order.tokenIn = 0;
+    input.order.tokenOut = 0;
+    input.order.destinationChainId = destinationChainId;
+    input.order.networkIn = networkIn;
+    input.order.networkOut = networkOut;
+    input.order.nonce = nonce;
+
+    QSB_ComputeOrderHash_output result;
+    if (!runContractFunction(nodeIp, nodePort, QSB_CONTRACT_INDEX, QSB_FUNC_COMPUTE_ORDER_HASH,
+            &input, sizeof(input), &result, sizeof(result)))
+    {
+        LOG("Failed to receive QSB ComputeOrderHash result.\n");
+        return;
+    }
+
+    std::cout << "Order Hash: ";
+    for (size_t i = 0; i < 32; ++i)
+        std::cout << std::hex << std::setfill('0') << std::setw(2) << (int)result.hash.hash[i];
+    std::cout << std::dec << "\n";
+}
+
+void qsbGetOracles(const char* nodeIp, int nodePort)
+{
+    QSB_GetOracles_output result;
+    if (!runContractFunction(nodeIp, nodePort, QSB_CONTRACT_INDEX, QSB_FUNC_GET_ORACLES,
+            nullptr, 0, &result, sizeof(result)))
+    {
+        LOG("Failed to receive QSB GetOracles result.\n");
+        return;
+    }
+
+    std::cout << "Oracles (" << result.count << "):\n";
+    char idBuf[128] = {0};
+    for (uint32_t i = 0; i < result.count; ++i)
+    {
+        getIdentityFromPublicKey(result.accounts[i], idBuf, false);
+        std::cout << "  " << (i + 1) << ". " << idBuf << "\n";
+    }
+}
+
+void qsbGetPausers(const char* nodeIp, int nodePort)
+{
+    QSB_GetPausers_output result;
+    if (!runContractFunction(nodeIp, nodePort, QSB_CONTRACT_INDEX, QSB_FUNC_GET_PAUSERS,
+            nullptr, 0, &result, sizeof(result)))
+    {
+        LOG("Failed to receive QSB GetPausers result.\n");
+        return;
+    }
+
+    std::cout << "Pausers (" << result.count << "):\n";
+    char idBuf[128] = {0};
+    for (uint32_t i = 0; i < result.count; ++i)
+    {
+        getIdentityFromPublicKey(result.accounts[i], idBuf, false);
+        std::cout << "  " << (i + 1) << ". " << idBuf << "\n";
+    }
+}
+
+void qsbGetLockedOrders(const char* nodeIp, int nodePort, uint32_t offset, uint32_t limit)
+{
+    QSB_GetLockedOrders_input input{};
+    input.offset = offset;
+    input.limit = (limit == 0 || limit > QSB_QUERY_MAX_PAGE_SIZE) ? QSB_QUERY_MAX_PAGE_SIZE : limit;
+
+    QSB_GetLockedOrders_output result;
+    if (!runContractFunction(nodeIp, nodePort, QSB_CONTRACT_INDEX, QSB_FUNC_GET_LOCKED_ORDERS,
+            &input, sizeof(input), &result, sizeof(result)))
+    {
+        LOG("Failed to receive QSB GetLockedOrders result.\n");
+        return;
+    }
+
+    std::cout << "Locked orders (total: " << result.totalActive << ", showing " << result.returned << "):\n";
+    char idBuf[128] = {0};
+    for (uint32_t i = 0; i < result.returned; ++i)
+    {
+        const QSB_LockedOrderEntry& e = result.entries[i];
+        getIdentityFromPublicKey(e.sender, idBuf, false);
+        std::cout << "  " << (offset + i + 1) << ". sender=" << idBuf
+                  << " amount=" << e.amount << " relayerFee=" << e.relayerFee
+                  << " nonce=" << e.nonce << "\n";
+        std::cout << "      orderHash: ";
+        for (size_t j = 0; j < 32; ++j)
+            std::cout << std::hex << std::setfill('0') << std::setw(2) << (int)e.orderHash.hash[j];
+        std::cout << std::dec << "\n";
+    }
+}
+
+void qsbGetFilledOrders(const char* nodeIp, int nodePort, uint32_t offset, uint32_t limit)
+{
+    QSB_GetFilledOrders_input input{};
+    input.offset = offset;
+    input.limit = (limit == 0 || limit > QSB_QUERY_MAX_PAGE_SIZE) ? QSB_QUERY_MAX_PAGE_SIZE : limit;
+
+    QSB_GetFilledOrders_output result;
+    if (!runContractFunction(nodeIp, nodePort, QSB_CONTRACT_INDEX, QSB_FUNC_GET_FILLED_ORDERS,
+            &input, sizeof(input), &result, sizeof(result)))
+    {
+        LOG("Failed to receive QSB GetFilledOrders result.\n");
+        return;
+    }
+
+    std::cout << "Filled orders (total: " << result.totalActive << ", showing " << result.returned << "):\n";
+    for (uint32_t i = 0; i < result.returned; ++i)
+    {
+        std::cout << "  " << (offset + i + 1) << ". ";
+        for (size_t j = 0; j < 32; ++j)
+            std::cout << std::hex << std::setfill('0') << std::setw(2) << (int)result.hashes[i].hash[j];
+        std::cout << std::dec << "\n";
+    }
 }

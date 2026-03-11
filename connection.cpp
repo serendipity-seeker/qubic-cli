@@ -418,3 +418,8 @@ template QSB_IsOracle_output QubicConnection::receivePacketWithHeaderAs<QSB_IsOr
 template QSB_IsPauser_output QubicConnection::receivePacketWithHeaderAs<QSB_IsPauser_output>();
 template QSB_GetLockedOrder_output QubicConnection::receivePacketWithHeaderAs<QSB_GetLockedOrder_output>();
 template QSB_IsOrderFilled_output QubicConnection::receivePacketWithHeaderAs<QSB_IsOrderFilled_output>();
+template QSB_ComputeOrderHash_output QubicConnection::receivePacketWithHeaderAs<QSB_ComputeOrderHash_output>();
+template QSB_GetOracles_output QubicConnection::receivePacketWithHeaderAs<QSB_GetOracles_output>();
+template QSB_GetPausers_output QubicConnection::receivePacketWithHeaderAs<QSB_GetPausers_output>();
+template QSB_GetLockedOrders_output QubicConnection::receivePacketWithHeaderAs<QSB_GetLockedOrders_output>();
+template QSB_GetFilledOrders_output QubicConnection::receivePacketWithHeaderAs<QSB_GetFilledOrders_output>();

@@ -1306,6 +1306,13 @@ int run(int argc, char* argv[])
                 g_qsb_toAddressHex, g_qsb_relayerFee, g_offsetScheduledTick);
             break;
         }
+        case QSB_CANCEL_LOCK_CMD:
+        {
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            qsbCancelLock(g_nodeIp, g_nodePort, g_seed, g_qsb_nonce, g_offsetScheduledTick);
+            break;
+        }
         case QSB_TRANSFER_ADMIN_CMD:
         {
             sanityCheckNode(g_nodeIp, g_nodePort);
@@ -1387,6 +1394,42 @@ int run(int argc, char* argv[])
         {
             sanityCheckNode(g_nodeIp, g_nodePort);
             qsbIsOrderFilled(g_nodeIp, g_nodePort, g_qsb_orderHashHex);
+            break;
+        }
+        case QSB_COMPUTE_ORDER_HASH_CMD:
+        {
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckIdentity(g_qsb_computeOrderFromId);
+            sanityCheckIdentity(g_qsb_computeOrderToId);
+            qsbComputeOrderHash(g_nodeIp, g_nodePort,
+                g_qsb_computeOrderFromId, g_qsb_computeOrderToId,
+                g_qsb_computeOrderAmount, g_qsb_computeOrderRelayerFee,
+                g_qsb_computeOrderDestChain, g_qsb_computeOrderNetIn,
+                g_qsb_computeOrderNetOut, g_qsb_computeOrderNonce);
+            break;
+        }
+        case QSB_GET_ORACLES_CMD:
+        {
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            qsbGetOracles(g_nodeIp, g_nodePort);
+            break;
+        }
+        case QSB_GET_PAUSERS_CMD:
+        {
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            qsbGetPausers(g_nodeIp, g_nodePort);
+            break;
+        }
+        case QSB_GET_LOCKED_ORDERS_CMD:
+        {
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            qsbGetLockedOrders(g_nodeIp, g_nodePort, g_qsb_viewOffset, g_qsb_viewLimit);
+            break;
+        }
+        case QSB_GET_FILLED_ORDERS_CMD:
+        {
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            qsbGetFilledOrders(g_nodeIp, g_nodePort, g_qsb_viewOffset, g_qsb_viewLimit);
             break;
         }
         case SHAREHOLDER_SET_PROPOSAL:

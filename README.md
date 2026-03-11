@@ -4,7 +4,7 @@ Qubic Core client
 
 An intermediate tool to communicate to qubic core node.
 
-> [![MultiPlatformBuild](https://github.com/qubic/qubic-cli/actions/workflows/cmake-multi-platform.yml/badge.svg?branch=main)](https://github.com/qubic/qubic-cli/actions/workflows/cmake-multi-platform.yml)
+> [MultiPlatformBuild](https://github.com/qubic/qubic-cli/actions/workflows/cmake-multi-platform.yml)
 
 ```
 ./qubic-cli [basic config] [command] [command extra parameters]
@@ -468,6 +468,16 @@ Commands:
 		Get information about a locked order by nonce.
 	-qsbisorderfilled <ORDER_HASH_HEX>
 		Check if an order hash has already been filled in QSB (64 hex chars).
+	-qsbcomputeorderhash <FROM_ID> <TO_ID> <AMOUNT> <RELAYER_FEE> <DEST_CHAIN> <NET_IN> <NET_OUT> <NONCE>
+		Compute canonical order hash for Unlock verification. Use with -qsbisorderfilled to verify an unlock.
+	-qsbgetoracles
+		List all oracle accounts (bulk enumeration).
+	-qsbgetpausers
+		List all pauser accounts (bulk enumeration).
+	-qsbgetlockedorders [OFFSET] [LIMIT]
+		List locked orders (paginated). Default offset=0, limit=64.
+	-qsbgetfilledorders [OFFSET] [LIMIT]
+		List filled order hashes (paginated). Default offset=0, limit=64.
 
 [TESTING COMMANDS]
 	-testqpifunctionsoutput
@@ -485,6 +495,7 @@ enabled.
 ### BUILD
 
 On Linux or MacOS, make sure `cmake` and `make` commands are installed and then run:
+
 ```
 mkdir build;
 cd build;
@@ -493,7 +504,6 @@ cmake --build .;
 ```
 
 On Windows, use the CMake GUI to create a Visual Studio project and then build the executable in Visual Studio.
-
 
 ### USAGE
 
@@ -504,6 +514,7 @@ To get current tick of a node:
 `./qubic-cli -nodeip 127.0.0.1 -getcurrenttick`
 
 example return:
+
 ```
 Tick: 10660587
 Epoch: 82
@@ -515,6 +526,7 @@ Dump publickey, privatekey and identity:
 `./qubic-cli -seed aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -showkeys`
 
 example return:
+
 ```
 Seed: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 Private key: 62506d370a4e9f42720269c0c973a544de0b6559bda46d1d8dd2fcda9fe4fada
@@ -597,7 +609,6 @@ To represent the `GetWinners_output` struct, we use the following format string 
 
 ***Supported data types:*** `sint8`, `uint8`, `sint16`, `uint16`, `sint32`, `uint32`, `sint64`, `uint64`, `id`, `Array`, `Struct`
 
-
 **Invoke a contract procedure:**
 
 Example — creating a multisig vault with 2 owners and threshold = 2:
@@ -620,3 +631,4 @@ Example — how to get current players of the `RandomLottery` contract
 More information, please read the help. `./qubic-cli -help`
 
 #### NOTE: PROPER ACTIONS are needed if you use this tool as a replacement for qubic wallet. Please use it with caution.
+

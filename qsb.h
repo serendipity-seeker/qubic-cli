@@ -302,9 +302,11 @@ struct QSB_ComputeOrderHash_output
 };
 
 // GetOracles() - bulk enumeration
+// Note: Contract adds 4-byte padding between count and accounts (alignment).
 struct QSB_GetOracles_output
 {
     uint32_t count;
+    uint8_t _padding[4];  // alignment padding (matches contract layout)
     uint8_t accounts[64][32];  // QSB_MAX_ORACLES * 32 bytes
 
     static constexpr unsigned char type()
@@ -314,9 +316,11 @@ struct QSB_GetOracles_output
 };
 
 // GetPausers() - bulk enumeration
+// Note: Contract adds 4-byte padding between count and accounts (alignment).
 struct QSB_GetPausers_output
 {
     uint32_t count;
+    uint8_t _padding[4];  // alignment padding (matches contract layout)
     uint8_t accounts[32][32];  // QSB_MAX_PAUSERS * 32 bytes
 
     static constexpr unsigned char type()
